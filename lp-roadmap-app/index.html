@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning People Roadmap to Deployment</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- App Styles -->
+    <style>
+        /* Use Poppins and Lato fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Lato:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f8fafc; /* Tailwind gray-50 */
+        }
+
+        h1, h2, h3, h4, h5, h6, .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* --- View Toggles --- */
+        .view-controls {
+            display: flex;
+            border-radius: 9999px; /* pill */
+            background-color: #e2e8f0; /* gray-200 */
+            padding: 4px;
+        }
+
+        .view-controls input[type="radio"] {
+            display: none; /* Hide the radio button */
+        }
+
+        .view-controls label {
+            padding: 8px 20px;
+            cursor: pointer;
+            border-radius: 9999px;
+            color: #475569; /* gray-600 */
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .view-controls input[type="radio"]:checked + label {
+            background-color: #ffffff;
+            color: #0369a1; /* sky-800 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Horizontal Roadmap Track --- */
+        .roadmap-container-wrapper {
+            overflow-x: auto;
+            padding: 20px 0 30px 0;
+            /* Subtle scrollbar for webkit */
+            &::-webkit-scrollbar {
+                height: 8px;
+            }
+            &::-webkit-scrollbar-track {
+                background: #e2e8f0; /* gray-200 */
+                border-radius: 4px;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: #94a3b8; /* gray-400 */
+                border-radius: 4px;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background: #64748b; /* gray-500 */
+            }
+        }
+
+        .roadmap-track {
+            display: flex;
+            flex-wrap: nowrap;
+            padding-left: 40px;
+            padding-right: 40px;
+            gap: 40px;
+        }
+
+        /* --- Card Styles --- */
+        .roadmap-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0; /* gray-200 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .roadmap-card.filtered-out {
+            opacity: 0.2;
+            transform: scale(0.95);
+        }
+
+        .roadmap-card-content {
+            padding: 24px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Card-specific sizes */
+        .card-view-helicopter { min-width: 300px; max-width: 300px; height: 200px; }
+        .card-view-phase { min-width: 360px; max-width: 360px; height: 500px; }
+        .card-view-subphase { min-width: 360px; max-width: 360px; height: 480px; }
+        .card-view-task { min-width: 320px; max-width: 320px; height: 260px; }
+        
+        /* Horizontal Connectors */
+        .roadmap-card:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -30px; /* Half of gap size */
+            width: 20px; /* (gap - card_border) */
+            height: 4px;
+            background-color: #cbd5e1; /* gray-300 */
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+
+        .card-view-helicopter:not(:last-child)::after { top: 50%; }
+        .card-view-phase:not(:last-child)::after { top: 60px; }
+        .card-view-subphase:not(:last-child)::after { top: 60px; }
+        .card-view-task:not(:last-child)::after { top: 60px; }
+
+        .card-header-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+        }
+        
+        .card-content-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9; /* gray-100 */
+        }
+        
+        .card-content-section h5 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: #0369a1; /* sky-800 */
+            margin-bottom: 8px;
+        }
+        
+        .card-content-section p, .card-content-section ul {
+            font-size: 0.875rem;
+            color: #475569; /* gray-600 */
+            line-height: 1.6;
+        }
+        
+        .card-content-section ul {
+            list-style: disc;
+            padding-left: 20px;
+        }
+
+        /* --- Theme Pills & Filters --- */
+        .theme-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .theme-pill:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .theme-filter-button {
+            transition: all 0.2s ease;
+        }
+        .theme-filter-button.active {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* blue-500 focus ring */
+            transform: scale(1.05);
+        }
+        .theme-filter-button:not(.active) {
+            opacity: 0.7;
+        }
+
+        /* --- Reusable Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        
+        /* New Explain Button Styles */
+        .card-header-wrapper {
+            position: relative;
+        }
+        
+        .explain-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #f0f9ff; /* sky-50 */
+            color: #0369a1; /* sky-800 */
+            border: 1px solid #e0f2fe; /* sky-200 */
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .explain-button:hover {
+            background-color: #e0f2fe; /* sky-200 */
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* New Gemini Button Style */
+        .gemini-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #f3e8ff; /* purple-100 */
+            color: #581c87; /* purple-900 */
+            border: none;
+        }
+        
+        .gemini-button:hover {
+            background-color: #e9d5ff; /* purple-200 */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* New Gemini Modal Styles */
+        #gemini-modal-content {
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #gemini-modal-body {
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0; /* gray-200 */
+            border-top-color: #0ea5e9; /* sky-500 */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- App Container -->
+    <div class="app-container max-w-7xl mx-auto p-4 md:p-8">
+        
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 font-poppins">Learning People Roadmap</h1>
+            <p class="text-lg text-gray-500 mt-1">Interactive Deployment Plan: From Baseline to AI Assistant</p>
+            <button id="data-rationale-btn" class="mt-4 text-sm font-medium text-sky-700 hover:text-sky-600 font-poppins">
+                <i class="fa-solid fa-database mr-1.5"></i> Why These Three Feeds? (Data Rationale)
+            </button>
+        </header>
+
+        <!-- View & Theme Controls -->
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
+            
+            <!-- View Toggles -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="font-poppins font-bold text-gray-700"><i class="fa-solid fa-binoculars mr-2 text-sky-700"></i>Select View Level</div>
+                <div class="view-controls overflow-x-auto">
+                    <input type="radio" name="view" id="view-helicopter" value="helicopter" checked>
+                    <label for="view-helicopter"><i class="fa-solid fa-helicopter mr-1.5"></i>Helicopter</label>
+                    
+                    <input type="radio" name="view" id="view-phase" value="phase">
+                    <label for="view-phase"><i class="fa-solid fa-layer-group mr-1.5"></i>Phase</label>
+                    
+                    <input type="radio" name="view" id="view-subphase" value="subphase">
+                    <label for="view-subphase"><i class="fa-solid fa-tasks mr-1.5"></i>Sub-Phase</label>
+                    
+                    <input type="radio" name="view" id="view-task" value="task">
+                    <label for="view-task"><i class="fa-solid fa-list-check mr-1.5"></i>Task</label>
+                </div>
+            </div>
+
+            <!-- Core Themes (Expandable) -->
+            <div class="mt-6">
+                <details class="w-full">
+                    <summary class="font-poppins font-bold text-gray-700 cursor-pointer py-4"><i class="fa-solid fa-tags mr-2 text-sky-700"></i>Core Themes <span class="text-sm font-normal text-gray-500">(Click to expand & filter)</span></summary>
+                    <div id="theme-filter-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 p-4 bg-gray-50 rounded-lg">
+                        <!-- Theme Filters will be injected here by JS -->
+                    </div>
+                </details>
+            </div>
+
+        </div>
+
+        <!-- Roadmap Container Wrapper (Horizontal Scroller) -->
+        <div class="roadmap-container-wrapper mt-8">
+            <div id="roadmap-track" class="roadmap-track">
+                <!-- Roadmap cards will be injected here by JS -->
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Gemini Modal -->
+    <div id="gemini-modal" class="modal-overlay">
+        <div id="gemini-modal-content" class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="gemini-modal-title" class="text-2xl font-bold font-poppins text-purple-800"></h3>
+                <button id="gemini-modal-close-button" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="gemini-modal-body">
+                <div id="gemini-modal-loading" class="loading-spinner"></div>
+                <div id="gemini-modal-text" class="prose"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme Details Modal -->
+    <div id="theme-modal" class="modal-overlay">
+        <div id="theme-modal-content" class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-theme-title" class="text-2xl font-bold font-poppins"></h3>
+                <button id="modal-close-button" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <p id="modal-theme-description" class="text-gray-600"></p>
+        </div>
+    </div>
+    
+    <!-- Data Rationale Modal -->
+    <div id="data-rationale-modal" class="modal-overlay">
+        <div id="data-rationale-modal-content" class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold font-poppins text-sky-700">
+                    <i class="fa-solid fa-database mr-2"></i> Why These Three Feeds?
+                </h3>
+                <button id="data-rationale-close-button" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="modal-rationale-body">
+                <p class="text-gray-600 mb-4">For the Phase One Verified Baseline we selected three data sources deliberately:</p>
+                <div class="data-source-grid">
+                    <div class="data-card">
+                        <div class="data-icon"><i class="fa-solid fa-eye"></i></div>
+                        <div>
+                            <h4>1. Google Search Console</h4>
+                            <p>Shows how discoverable Learning People is in Google — the keywords, pages, impressions, and CTR that drive visibility and intent.</p>
+                            <p class="question">It tells us: “Are the right people seeing the right pages?”</p>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div>
+                            <h4>2. Google Analytics 4</h4>
+                            <p>Measures what users actually do once they land — engagement, quality, intent, and value signals.</p>
+                            <p class="question">It tells us: “Are visitors finding what they need?”</p>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div>
+                            <h4>3. SEMrush Organic Positions</h4>
+                            <p>Gives an independent ranking footprint and confirms keyword competitiveness at scale.</p>
+                            <p class="question">It tells us: “Where do we stand in the market?”</p>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold font-poppins text-gray-800 mt-6 mb-2">Why only these three?</h3>
+                <p class="text-gray-600">Because together they create the minimum viable, cross-verified, audit-ready spine for all downstream work. Other feeds (toxic backlinks, competitor gaps, etc.) are layered on *after* this "source-of-truth triangle" is locked.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JavaScript -->
+    <script>
+        const app = {
+            // --- STATE ---
+            currentView: 'helicopter',
+            activeThemes: [],
+            
+            // --- DATA ---
+            themeData: {
+                'gov': { title: 'Data Governance', color: 'blue', description: 'Establishing rules, processes, and controls to ensure data is accurate, consistent, secure, and reliable across the system.' },
+                'data': { title: 'Data Integrity & Lineage', color: 'indigo', description: 'Ensuring data is whole, accurate, and traceable from its source to its final output, forming an auditable "source of truth".' },
+                'ai': { title: 'AI/LLM Readiness', color: 'purple', description: 'Structuring data and processes in a way that allows AI and Large Language Models to be safely and reliably deployed.' },
+                'value': { title: 'Value & ROI', color: 'green', description: 'Actions and metrics directly focused on proving measurable improvements and a tangible return on investment.' },
+                'ops': { title: 'Operational Workflow', color: 'amber', description: 'Defining and refining the human-in-the-loop processes, handoffs, and briefs required to action insights.' }
+            },
+            
+            roadmapData: [
+                {
+                    id: 'phase1',
+                    title: 'Phase One Verified Baseline',
+                    subtitle: 'You are here',
+                    icon: 'fa-clipboard-list',
+                    color: 'blue',
+                    purpose: "Create the 'Day 0 Snapshot' — the anchor point for all future measurement.",
+                    value: "We freeze the truth as it exists today: Bound cohorts captured and locked, Unified KPI defined, Risks validated (Toxicity, Schema, Telemetry), and Everything hash-verified and reproducible.",
+                    exit_criteria: 'All foundational data feeds (GSC, GA4, SEMrush) are bound, hash-locked, and stored. All baseline risks (R-TOX, R-SCHEMA, R-TELEM) are diagnosed and documented.',
+                    themes: ['gov', 'data', 'ai'],
+                    subphases: [
+                        {
+                            id: 'sp1_1', title: 'Cohort Binding', 
+                            purpose: 'To "freeze the truth" by binding the right rows of data to the right URLs/categories at a specific moment in time.',
+                            value: 'Prevents "data shift" and ensures all future comparisons are accurate (apples-to-apples). This is the #1 requirement for trustworthy deltas and AI.',
+                            exit_criteria: 'Binding scripts are run, and cohort data (URLs, GSC rows, etc.) is hash-locked.',
+                            examples: 'Mapping all "/courses/..." URLs to the "Course Pages" cohort. Locking the GSC query data for this cohort as of Day 0.',
+                            themes: ['gov', 'data'],
+                            tasks: [
+                                { id: 't1_1_1', title: 'Define Cohort Roots', description: 'Identify and get client sign-off on the URL patterns that define each critical cohort.' },
+                                { id: 't1_1_2', title: 'Run Binding Script', description: 'Execute the binding script to capture and associate all relevant data (GSC, GA4) to the defined cohorts.' },
+                                { id: 't1_1_3', title: 'Generate & Store Checksums', description: 'Create hash-checksums of the bound data files to prove they are unaltered (T0 snapshot).' }
+                            ]
+                        },
+                        {
+                            id: 'sp1_2', title: 'Risk Diagnostics',
+                            purpose: 'To run technical audits and identify the specific risks that are harming performance or data quality.',
+                            value: 'Provides the "fix list" for Phase 2. Moves from guessing to a precise, data-backed remediation plan.',
+                            exit_criteria: 'Completed audit reports for R-TOX, R-SCHEMA, and R-TELEM.',
+                            examples: 'A list of toxic domains to be disavowed (R-TOX). A report of missing "Provider" schema on course pages (R-SCHEMA).',
+                            themes: ['data', 'value', 'ops'],
+                            tasks: [
+                                { id: 't1_2_1', title: 'Run R-TOX Audit', description: 'Perform a comprehensive backlink audit to identify toxic or high-risk domains for disavow.' },
+                                { id: 't1_2_2', title: 'Run R-SCHEMA Audit', description: 'Audit high-value templates (e.g., course pages) for schema completeness, correctness, and gaps.' },
+                                { id: 't1_2_3', title: 'Run R-TELEM Audit', description: 'Audit GA4 and GTM setups to find tracking gaps, misconfigurations, or data quality issues.' }
+                            ]
+                        },
+                        {
+                            id: 'sp1_3', title: 'Unified KPI Definition',
+                            purpose: 'To define a single "North Star" metric that combines visibility, desirability, and engagement.',
+                            value: 'Aligns all teams (SEO, Content, Dev) on a single goal that maps to business value, preventing "clickbait SEO" or siloed optimization.',
+                            exit_criteria: 'A clearly defined formula for the Unified KPI (e.g., "Engaged CTR") is signed off by the client.',
+                            examples: 'Metric: Engaged CTR = (Clicks * Engagement %) / Impressions.',
+                            themes: ['value', 'ai', 'ops'],
+                            tasks: [
+                                { id: 't1_3_1', title: 'Define "Engaged CTR" Formula', description: 'Workshop and finalize the precise formula for the Unified KPI.' },
+                                { id: 't1_3_2', title: 'Get Client Sign-off', description: 'Present the KPI and its business value to get formal client approval.' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'phase2',
+                    title: 'PowerPatch Lite',
+                    subtitle: 'Next',
+                    icon: 'fa-wrench',
+                    color: 'amber',
+                    purpose: 'We action the three confirmed risks: R-TOX (controlled disavow + post-audit), R-SCHEMA (rollout to high-value templates), and R-TELEM (unify KPIs, align teams, fix tracking gaps).',
+                    value: 'We then run binding again and compare: “What changed vs our baseline?” This is where uplift becomes measurable.',
+                    exit_criteria: 'Initial fixes for R-TOX, R-SCHEMA, and R-TELEM are live. A "Delta-T1" snapshot is created and compared against the "T0" baseline.',
+                    themes: ['value', 'ops', 'data'],
+                    subphases: [
+                        {
+                            id: 'sp2_1', title: 'Targeted Remediation',
+                            purpose: 'To execute the "fix list" generated by the Phase 1 diagnostics in a controlled manner.',
+                            value: 'Cleans the data environment, removes performance blockers, and directly improves key metrics.',
+                            exit_criteria: 'The three core risks (TOX, SCHEMA, TELEM) have their initial fixes deployed to the live environment.',
+                            examples: 'Submitting the disavow file to Google. Devs pushing schema updates. GTM container being updated with new tags.',
+                            themes: ['value', 'ops'],
+                            tasks: [
+                                { id: 't2_1_1', title: 'Execute R-TOX Disavow', description: 'Prepare and submit the disavow file based on the R-TOX audit.' },
+                                { id: 't2_1_2', title: 'Deploy R-SCHEMA Fixes', description: 'Roll out schema updates to the highest-value page templates.' },
+                                { id: 't2_1_3', title: 'Implement R-TELEM Fixes', description: 'Correct tracking gaps in GTM/GA4 to ensure the Unified KPI is accurate.' }
+                            ]
+                        },
+                        {
+                            id: 'sp2_2', title: 'WHYTEBOX Briefing',
+                            purpose: 'To translate diagnosed risks into clear, actionable briefs for client teams (dev, SEO, content).',
+                            value: 'Establishes the human-in-the-loop workflow. The client acts as the central gateway, retaining full control and routing actions.',
+                            exit_criteria: 'Client has approved and routed action briefs for the Phase 2 fixes.',
+                            examples: 'A dev ticket with exact schema code. A content brief for a low-engagement page. A routing "battle card" for the client PM.',
+                            themes: ['ops', 'ai'],
+                            tasks: [
+                                { id: 't2_2_1', title: 'Generate Action Briefs', description: 'Create clear, concise briefs for each remediation task (e.g., a dev ticket for schema).' },
+                                { id: 't2_2_2', title: 'Client Routes to Teams', description: 'Client-side PM receives briefs and routes them to the correct internal/external teams for execution.' }
+                            ]
+                        },
+                        {
+                            id: 'sp2_3', title: 'Delta Measurement',
+                            purpose: 'To prove the value of the remediation by re-running the binding process and comparing it to the baseline.',
+                            value: 'This is the "Proof of ROI". It creates an auditable "Delta Log" that scientifically proves the uplift from the actions taken.',
+                            exit_criteria: 'A T1 vs. T0 Delta Log is generated and presented to the client.',
+                            examples: 'A report showing a 15% increase in "Engaged CTR" for the schema-updated cohort.',
+                            themes: ['value', 'data', 'gov'],
+                            tasks: [
+                                { id: 't2_3_1', title: 'Create T1 Snapshot', description: 'After fixes are live and indexed, re-run the binding script to create a "T1" snapshot.' },
+                                { id: 't2_3_2', title: 'Generate Delta Log', description: 'Compare T1 vs. T0 for the affected cohorts and generate a report showing the precise change (delta).' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'phase3',
+                    title: 'PowerPatch Q2+ (Scale-Up)',
+                    subtitle: 'Quarterly Governed Cycle',
+                    icon: 'fa-chart-line',
+                    color: 'green',
+                    purpose: 'To repeat the governed PowerPatch cycle quarterly, scaling up the scope and intelligence.',
+                    value: 'The same governed cycle repeats quarterly, adding: More cohorts, More templates & markets, More intelligence feeds & diagnostics.',
+                    exit_criteria: 'A new Delta Log (T2 vs T1) is created. New cohorts (e.g., "AU Market") are successfully added to the baseline.',
+                    themes: ['value', 'ops', 'gov'],
+                    subphases: [
+                        {
+                            id: 'sp3_1', title: 'Governed Operations Cycle',
+                            purpose: 'To turn the client\'s organic operations into a governed, scalable performance engine.',
+                            value: 'This phase establishes the quarterly rhythm of measuring, actioning, and proving value, all based on the proven, client-led workflow from Phase 2.',
+                            exit_criteria: 'The client team is fully enabled to route briefs and consume Delta Logs as part of their BAU operations.',
+                            examples: 'Q2: Add "Career Path" pages as a new cohort. Q3: Add "AU Market" as a new cohort.',
+                            themes: ['ai', 'ops', 'value'],
+                            tasks: [
+                                { id: 't3_1_1', title: 'Identify & Add New Cohorts', description: 'Work with the client to define the next set of high-value cohorts to bring under governance.' },
+                                { id: 't3_1_2', title: 'Run Q2+ Delta Measurement', description: 'Repeat the Delta Log process to prove ongoing value and identify new opportunities.' },
+                                { id: 't3_1_3', title: 'Incorporate New Intelligence Feeds', description: 'Layer in new diagnostics (e.g., competitor gaps) on top of the stable baseline.' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'phase4',
+                    title: 'AI Assistant',
+                    subtitle: 'Target System for Early 2026',
+                    icon: 'fa-robot',
+                    color: 'purple',
+                    purpose: "Turn Learning People’s organic operations into a governed, AI-assisted performance engine.",
+                    value: "Built on top of the governed data layer, enabling: Conversational queries (e.g., “Show me pages with schema gaps...”), Automated dev tickets & content briefs, Automated risk dashboards, and all rules bound to unified KPIs.",
+                    exit_criteria: 'A Custom GPT front-end is deployed. The AI can query the governed data layer and generate its first automated briefs based on rules.',
+                    themes: ['ai', 'ops', 'gov'],
+                    subphases: [
+                        {
+                            id: 'sp4_1', title: 'Data Layer Orchestration',
+                            purpose: 'To mirror the baseline model in a structured database and build an API layer for the AI to query.',
+                            value: 'This is the "brain" of the AI. It provides a stable, queryable data source that the AI can safely interact with, preventing "live" access.',
+                            exit_criteria: 'A structured database (e.g., BigQuery, Sheets) is populated. An API or Apps Script layer is functional.',
+                            examples: 'A Google Sheet that automatically mirrors the bound cohort data. An Apps Script function `getSchemaGaps(cohort)` for the AI to call.',
+                            themes: ['ai', 'data', 'gov'],
+                            tasks: [
+                                { id: 't4_1_1', title: 'Build Structured DB/Sheet', description: 'Create the database or structured Google Sheet that mirrors the governed baseline model.' },
+                                { id: 't4_1_2', title: 'Develop API/Apps Script Layer', description: 'Build the orchestration layer that allows the AI to query the data via safe, predefined functions.' }
+                            ]
+                        },
+                        {
+                            id: 'sp4_2', title: 'AI Assistant Deployment',
+                            purpose: 'To build the conversational front-end (Custom GPT) and define its rules and actions.',
+                            value: 'The "face" of the AI. Provides a simple, conversational interface for the client to access complex, governed data.',
+                            exit_criteria: 'A Custom GPT is built and connected to the orchestration layer via its "Actions".',
+                            examples: 'A Custom GPT with actions like `generateContentBrief` and `findSchemaGaps`.',
+                            themes: ['ai', 'ops'],
+                            tasks: [
+                                { id: 't4_2_1', title: 'Build Custom GPT Front-end', description: 'Design, build, and test the Custom GPT, including its persona, instructions, and guardrails.' },
+                                { id: 't4_2_2', title: 'Define AI Actions & Rules', description: 'Connect the GPT to the API layer and define the rules for when it can take action (e.g., "If Engaged CTR drops, alert human").' }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            
+            // --- UI ELEMENT CACHE ---
+            elements: {},
+
+            // --- METHODS ---
+            
+            /**
+             * Initialize the application
+             */
+            init() {
+                // Cache DOM elements
+                this.elements.viewControls = document.querySelectorAll('input[name="view"]');
+                this.elements.themeFilterContainer = document.getElementById('theme-filter-container');
+                this.elements.roadmapTrack = document.getElementById('roadmap-track');
+                
+                // Theme Modal
+                this.elements.modal = document.getElementById('theme-modal');
+                this.elements.modalTitle = document.getElementById('modal-theme-title');
+                this.elements.modalDescription = document.getElementById('modal-theme-description');
+                this.elements.modalClose = document.getElementById('modal-close-button');
+                
+                // Gemini Modal
+                this.elements.geminiModal = document.getElementById('gemini-modal');
+                this.elements.geminiModalTitle = document.getElementById('gemini-modal-title');
+                this.elements.geminiModalBody = document.getElementById('gemini-modal-body');
+                this.elements.geminiModalLoading = document.getElementById('gemini-modal-loading');
+                this.elements.geminiModalText = document.getElementById('gemini-modal-text');
+                this.elements.geminiModalClose = document.getElementById('gemini-modal-close-button');
+                
+                // Rationale Modal
+                this.elements.rationaleBtn = document.getElementById('data-rationale-btn');
+                this.elements.rationaleModal = document.getElementById('data-rationale-modal');
+                this.elements.rationaleClose = document.getElementById('data-rationale-close-button');
+
+                // Render initial UI components
+                this.renderThemeFilters();
+                this.renderRoadmap();
+                
+                // Attach all event listeners
+                this.attachListeners();
+            },
+            
+            /**
+             * Attach all event listeners for the app
+             */
+            attachListeners() {
+                // View toggle listeners
+                this.elements.viewControls.forEach(radio => {
+                    radio.addEventListener('change', (e) => this.handleViewChange(e));
+                });
+                
+                // Theme filter listeners (using event delegation)
+                this.elements.themeFilterContainer.addEventListener('click', (e) => this.handleThemeFilterClick(e));
+                
+                // Theme Modal close listeners
+                this.elements.modalClose.addEventListener('click', () => this.hideThemeModal());
+                this.elements.modal.addEventListener('click', (e) => {
+                    if (e.target.id === 'theme-modal') this.hideThemeModal();
+                });
+                
+                // Gemini Modal close listeners
+                this.elements.geminiModalClose.addEventListener('click', () => this.hideGeminiModal());
+                this.elements.geminiModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'gemini-modal') this.hideGeminiModal();
+                });
+                
+                // Rationale Modal listeners
+                this.elements.rationaleBtn.addEventListener('click', () => this.showDataRationaleModal());
+                this.elements.rationaleClose.addEventListener('click', () => this.hideDataRationaleModal());
+                this.elements.rationaleModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'data-rationale-modal') this.hideDataRationaleModal();
+                });
+                
+                // Theme pill & Gemini button click listeners (using event delegation on the track)
+                this.elements.roadmapTrack.addEventListener('click', async (e) => {
+                    const pill = e.target.closest('.theme-pill');
+                    const geminiBtn = e.target.closest('.gemini-button');
+
+                    if (pill && pill.dataset.themeId) {
+                        // Handle Theme Pill Clicks
+                        this.showThemeModal(pill.dataset.themeId);
+                    } else if (geminiBtn && geminiBtn.dataset.action) {
+                        // Handle Gemini Button Clicks
+                        e.preventDefault();
+                        const action = geminiBtn.dataset.action;
+                        const context = JSON.parse(decodeURIComponent(geminiBtn.dataset.context));
+                        
+                        let prompt = '';
+                        let systemPrompt = '';
+                        let modalTitle = '';
+
+                        if (action === 'explain') {
+                            modalTitle = '✨ AI Explanation';
+                            systemPrompt = "You are an expert project manager who is brilliant at simplifying complex concepts. Respond in simple, clear HTML using <p> and <strong> tags.";
+                            prompt = `Please explain the following project item to a non-technical stakeholder in one or two short paragraphs. Focus on the 'why' and the 'business value'.\n\nCONTEXT:\n${JSON.stringify(context, null, 2)}`;
+                        } else if (action === 'brief') {
+                            modalTitle = '✨ AI-Generated Brief';
+                            systemPrompt = "You are a senior program manager creating an action brief for a technical team. Respond in simple, well-formatted HTML using <h2>, <ul>, <li>, and <p> tags.";
+                            prompt = `Based on the following project sub-phase, generate a concise action brief for the development/ops team. Include:\n1. A clear 'Goal' (as an <h2>).\n2. A list of 'Key Action Items' (as a <ul>) to achieve the exit criteria.\n3. A short list of 'Potential Blockers' (as an <h2> followed by a <ul>).\n\nSUB-PHASE DATA:\n${JSON.stringify(context, null, 2)}`;
+                        }
+
+                        if (prompt) {
+                            this.showGeminiModal(modalTitle);
+                            try {
+                                const resultText = await this.callGeminiAPI(prompt, systemPrompt);
+                                this.updateGeminiModal(resultText);
+                            } catch (error) {
+                                console.error('Gemini API call failed:', error);
+                                this.updateGeminiModal('<p class="text-red-600"><strong>Error:</strong> Could not generate response. Please check the console and try again.</p>');
+                            }
+                        }
+                    }
+                });
+            },
+            
+            /**
+             * Handle the change of view (Helicopter, Phase, etc.)
+             */
+            handleViewChange(e) {
+                this.currentView = e.target.value;
+                this.renderRoadmap();
+            },
+            
+            /**
+             * Handle clicking a theme filter button
+             */
+            handleThemeFilterClick(e) {
+                const button = e.target.closest('.theme-filter-button');
+                if (!button) return;
+                
+                const themeId = button.dataset.themeId;
+                button.classList.toggle('active');
+                
+                if (this.activeThemes.includes(themeId)) {
+                    // Remove it
+                    this.activeThemes = this.activeThemes.filter(t => t !== themeId);
+                } else {
+                    // Add it
+                    this.activeThemes.push(themeId);
+                }
+                
+                // Re-filter the view
+                this.filterRoadmap();
+            },
+            
+            /**
+             * Render the theme filter buttons
+             */
+            renderThemeFilters() {
+                let html = '';
+                for (const [id, theme] of Object.entries(this.themeData)) {
+                    const { base, text, hover } = this.getThemeColors(theme.color);
+                    html += `
+                        <button 
+                            class="theme-filter-button ${base} ${text} ${hover} p-3 rounded-lg font-poppins font-bold text-sm shadow-sm"
+                            data-theme-id="${id}"
+                        >
+                            <i class="fa-solid ${this.getThemeIcon(id)} mr-1.5"></i>
+                            ${theme.title}
+                        </button>
+                    `;
+                }
+                this.elements.themeFilterContainer.innerHTML = html;
+            },
+
+            /**
+             * Main render function for the roadmap track
+             */
+            renderRoadmap() {
+                let html = '';
+                const view = this.currentView;
+                
+                this.roadmapData.forEach(phase => {
+                    if (view === 'helicopter' || view === 'phase') {
+                        html += this.renderPhaseCard(phase, view);
+                    } else if (view === 'subphase') {
+                        phase.subphases.forEach(subphase => {
+                            html += this.renderSubphaseCard(subphase, phase);
+                        });
+                    } else if (view === 'task') {
+                        phase.subphases.forEach(subphase => {
+                            // Ensure tasks exist before trying to loop
+                            if (subphase.tasks && subphase.tasks.length > 0) {
+                                subphase.tasks.forEach(task => {
+                                    html += this.renderTaskCard(task, subphase, phase);
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                this.elements.roadmapTrack.innerHTML = html;
+                this.filterRoadmap(); // Apply initial filter
+            },
+
+            /**
+             * Applies filtering based on app.activeThemes
+             */
+            filterRoadmap() {
+                const cards = this.elements.roadmapTrack.querySelectorAll('.roadmap-card');
+                const hasActiveFilters = this.activeThemes.length > 0;
+                
+                cards.forEach(card => {
+                    if (!hasActiveFilters) {
+                        card.classList.remove('filtered-out');
+                        return;
+                    }
+                    
+                    const cardThemes = (card.dataset.themes || '').split(',');
+                    const hasMatch = this.activeThemes.some(activeTheme => cardThemes.includes(activeTheme));
+                    
+                    if (hasMatch) {
+                        card.classList.remove('filtered-out');
+                    } else {
+                        card.classList.add('filtered-out');
+                    }
+                });
+            },
+            
+            // --- CARD RENDERERS ---
+
+            renderPhaseCard(phase, view) {
+                const { base, text, hover } = this.getThemeColors(phase.color);
+                const context = encodeURIComponent(JSON.stringify(phase));
+                
+                let contentHtml = '';
+                if (view === 'phase') {
+                    contentHtml = `
+                        <div class="card-content-section">
+                            <h5>Purpose</h5>
+                            <p>${phase.purpose}</p>
+                        </div>
+                        <div class="card-content-section">
+                            <h5>Value & Exit Criteria</h5>
+                            <p>${phase.value}</p>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="roadmap-card card-view-${view}" data-themes="${phase.themes.join(',')}" data-id="${phase.id}">
+                        <div class="roadmap-card-content">
+                            <!-- Card Header -->
+                            <div class="card-header-wrapper flex items-center gap-4 ${view === 'helicopter' ? 'flex-col text-center justify-center pt-8' : ''}">
+                                <div class="card-header-icon ${base} ${text} ${hover}">
+                                    <i class="fa-solid ${phase.icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold font-poppins text-gray-800">${phase.title}</h3>
+                                    <h4 class="text-sm font-medium text-gray-500">${phase.subtitle}</h4>
+                                </div>
+                                <button 
+                                    class="explain-button gemini-button" 
+                                    data-action="explain" 
+                                    data-context="${context}" 
+                                    title="✨ Explain This">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Card Body (Phase view only) -->
+                            ${contentHtml}
+                            
+                            <!-- Card Footer -->
+                            <div class="mt-auto pt-4">
+                                ${this.renderThemePills(phase.themes)}
+                                ${view === 'phase' ? this.renderPillLinks(phase) : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            renderSubphaseCard(subphase, phase) {
+                const { base, text, hover } = this.getThemeColors(phase.color);
+                const context = encodeURIComponent(JSON.stringify(subphase));
+                return `
+                    <div class="roadmap-card card-view-subphase" data-themes="${subphase.themes.join(',')}" data-id="${subphase.id}">
+                        <div class="roadmap-card-content">
+                            <!-- Card Header -->
+                            <div class="card-header-wrapper flex items-center gap-4">
+                                <div class="card-header-icon ${base} ${text} ${hover}">
+                                    <i class="fa-solid ${phase.icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold font-poppins text-gray-800">${subphase.title}</h3>
+                                    <h4 class="text-sm font-medium text-gray-500">From: ${phase.title}</h4>
+                                </div>
+                                <button 
+                                    class="explain-button gemini-button" 
+                                    data-action="explain" 
+                                    data-context="${context}" 
+                                    title="✨ Explain This">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Card Body -->
+                            <div class="card-content-section">
+                                <h5>Purpose & Value</h5>
+                                <p>${subphase.purpose} ${subphase.value}</p>
+                            </div>
+                            <div class="card-content-section">
+                                <h5>Examples & Exit Criteria</h5>
+                                <p>${subphase.examples} <strong>Exit:</strong> ${subphase.exit_criteria}</p>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="mt-auto pt-4">
+                                ${this.renderThemePills(subphase.themes)}
+                                ${this.renderPillLinks(subphase)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            renderTaskCard(task, subphase, phase) {
+                const { base, text, hover } = this.getThemeColors(phase.color);
+                const context = encodeURIComponent(JSON.stringify(task));
+                // Safely check for task.themes, and fall back to subphase.themes
+                const taskThemes = (task.themes && task.themes.length > 0) ? task.themes : subphase.themes;
+                
+                return `
+                    <div class="roadmap-card card-view-task" data-themes="${taskThemes.join(',')}" data-id="${task.id}">
+                        <div class="roadmap-card-content">
+                            <!-- Card Header -->
+                            <div class="card-header-wrapper flex items-center gap-4">
+                                <div class="card-header-icon ${base} ${text} ${hover}">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold font-poppins text-gray-800">${task.title}</h3>
+                                    <h4 class="text-sm font-medium text-gray-500">From: ${subphase.title}</h4>
+                                </div>
+                                <button 
+                                    class="explain-button gemini-button" 
+                                    data-action="explain" 
+                                    data-context="${context}" 
+                                    title="✨ Explain This">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Card Body -->
+                            <div class="card-content-section">
+                                <h5>Description</h5>
+                                <p>${task.description}</p>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="mt-auto pt-4">
+                                ${this.renderThemePills(taskThemes)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // --- HELPER FUNCTIONS ---
+            
+            /**
+             * Generate HTML for theme pills
+             */
+            renderThemePills(themeIds) {
+                if (!themeIds || themeIds.length === 0) return '';
+                let html = '<div class="flex flex-wrap gap-2">';
+                themeIds.forEach(id => {
+                    const theme = this.themeData[id];
+                    if (theme) {
+                        const { base, text, hover } = this.getThemeColors(theme.color);
+                        html += `
+                            <span 
+                                class="theme-pill ${base} ${text} ${hover}"
+                                data-theme-id="${id}"
+                                title="Click to learn about ${theme.title}"
+                            >
+                                <i class="fa-solid ${this.getThemeIcon(id)} mr-1 opacity-70"></i>
+                                ${theme.title}
+                            </span>
+                        `;
+                    }
+                });
+                html += '</div>';
+                return html;
+            },
+            
+            /**
+             * Generate HTML for pill-shaped links
+             */
+            renderPillLinks(item) {
+                // In a real app, these links would be dynamic
+                let links = [
+                    { name: 'View Data', href: '#', icon: 'fa-database' }
+                ];
+                
+                const context = encodeURIComponent(JSON.stringify(item));
+                let html = `
+                    <button 
+                        class="gemini-button" 
+                        data-action="brief" 
+                        data-context="${context}"
+                    >
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>
+                        ✨ Generate Brief
+                    </button>
+                `;
+                
+                if(this.currentView === 'subphase') {
+                    links.push({ name: 'Task Board', href: '#', icon: 'fa-list-check' });
+                }
+
+                html += '<div class="flex flex-wrap gap-2 mt-2">';
+                links.forEach(link => {
+                    html += `
+                        <a 
+                            href="${link.href}" 
+                            class="theme-pill bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        >
+                            <i class="fa-solid ${link.icon} mr-1 opacity-70"></i>
+                            ${link.name}
+                        </a>
+                    `;
+                });
+                html += '</div>';
+                return html;
+            },
+
+            /**
+             * Show the theme details modal
+             */
+            showThemeModal(themeId) {
+                const theme = this.themeData[themeId];
+                if (!theme) return;
+                
+                const { base, text } = this.getThemeColors(theme.color);
+                
+                this.elements.modalTitle.className = `text-2xl font-bold font-poppins ${text}`;
+                this.elements.modalTitle.innerHTML = `<i class="fa-solid ${this.getThemeIcon(themeId)} mr-2"></i> ${theme.title}`;
+                this.elements.modalDescription.textContent = theme.description;
+                this.elements.modal.classList.add('visible');
+            },
+            
+            /**
+             * Hide the theme details modal
+             */
+            hideThemeModal() {
+                this.elements.modal.classList.remove('visible');
+            },
+            
+            /**
+             * Show the Gemini modal
+             */
+            showGeminiModal(title) {
+                this.elements.geminiModalTitle.textContent = title;
+                this.elements.geminiModalLoading.style.display = 'block';
+                this.elements.geminiModalText.style.display = 'none';
+                this.elements.geminiModalText.innerHTML = '';
+                this.elements.geminiModal.classList.add('visible');
+            },
+
+            /**
+             * Hide the Gemini modal
+             */
+            hideGeminiModal() {
+                this.elements.geminiModal.classList.remove('visible');
+            },
+            
+            /**
+             * Update the Gemini modal with content
+             */
+            updateGeminiModal(htmlContent) {
+                this.elements.geminiModalLoading.style.display = 'none';
+                this.elements.geminiModalText.style.display = 'block';
+                this.elements.geminiModalText.innerHTML = htmlContent;
+            },
+
+            /**
+             * Call the Gemini API
+             */
+            async callGeminiAPI(prompt, systemPrompt) {
+                const response = await fetch('/.netlify/functions/gemini-proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, systemPrompt })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Proxy request failed with status ${response.status}: ${await response.text()}`);
+                }
+
+                const result = await response.json();
+
+                if (!result.text) {
+                    throw new Error('Proxy returned no text from Gemini proxy.');
+                }
+
+                return result.text;
+            },
+            },
+            
+            /**
+             * Show the data rationale modal
+             */
+            showDataRationaleModal() {
+                this.elements.rationaleModal.classList.add('visible');
+            },
+            
+            /**
+             * Hide the data rationale modal
+             */
+            hideDataRationaleModal() {
+                this.elements.rationaleModal.classList.remove('visible');
+            },
+
+            /**
+             * Get Tailwind color classes for a theme
+             */
+            getThemeColors(color) {
+                const colors = {
+                    blue: { base: 'bg-blue-100', text: 'text-blue-800', hover: 'hover:bg-blue-200' },
+                    indigo: { base: 'bg-indigo-100', text: 'text-indigo-800', hover: 'hover:bg-indigo-200' },
+                    purple: { base: 'bg-purple-100', text: 'text-purple-800', hover: 'hover:bg-purple-200' },
+                    green: { base: 'bg-green-100', text: 'text-green-800', hover: 'hover:bg-green-200' },
+                    amber: { base: 'bg-amber-100', text: 'text-amber-800', hover: 'hover:bg-amber-200' }
+                };
+                return colors[color] || colors.blue;
+            },
+            
+            /**
+             * Get a Font Awesome icon for a theme
+             */
+            getThemeIcon(themeId) {
+                const icons = {
+                    'gov': 'fa-shield-alt',
+                    'data': 'fa-database',
+                    'ai': 'fa-robot',
+                    'value': 'fa-chart-line',
+                    'ops': 'fa-sitemap'
+                };
+                return icons[themeId] || 'fa-tag';
+            }
+        };
+
+        // Run the app once the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+    </script>
+</body>
+</html>
