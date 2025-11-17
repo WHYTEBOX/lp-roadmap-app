@@ -44,7 +44,8 @@ export const handler = async (event) => {
         return { statusCode: 500, body: 'Internal Server Error: API configuration missing.' };
     }
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const model = 'gemini-2.5-flash'; // stable 2.5 Flash model
+const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     // 3. Construct the payload for the *real* Gemini API
     const payload = {
@@ -87,4 +88,5 @@ export const handler = async (event) => {
         console.error('Error calling Gemini API:', error);
         return { statusCode: 500, body: `Internal Server Error: ${error.message}` };
     }
+
 };
